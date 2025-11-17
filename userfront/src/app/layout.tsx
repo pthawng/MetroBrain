@@ -54,9 +54,9 @@ export default function RootLayout({
 
                 {/* CENTRAL NAVIGATION: BALANCED POSITION */}
                 <nav className="hidden md:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-slate-100 absolute left-1/2 -translate-x-1/2">
-                  <a href="#" className="hover:text-primary transition-all hover:tracking-[0.3em]">Tuyến đường</a>
-                  <a href="#" className="hover:text-primary transition-all hover:tracking-[0.3em]">Giá vé</a>
-                  <a href="#" className="hover:text-primary transition-all hover:tracking-[0.3em]">Tin tức</a>
+                  <a href="/" className="hover:text-primary transition-all hover:tracking-[0.3em]">Trang chủ</a>
+                  <a href="/fare" className="hover:text-primary transition-all hover:tracking-[0.3em]">Giá vé</a>
+                  <a href="/" className="hover:text-primary transition-all hover:tracking-[0.3em]">Tin tức</a>
                 </nav>
 
                 {/* Primary Action */}

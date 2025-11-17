@@ -1,8 +1,10 @@
 import { ATOMIC_STATIONS } from '../features/booking/constants/map.constants';
+import { FARE_MATRIX } from '../features/booking/constants/fare.constants';
 
 export interface Station {
   id: string;
   name: string;
+  index: number;
   kmFromStart: number;
   x: number;
   y: number;
@@ -10,9 +12,10 @@ export interface Station {
   description?: string;
 }
 
-export const STATIONS: Station[] = ATOMIC_STATIONS.map(s => ({
+export const STATIONS: Station[] = ATOMIC_STATIONS.map((s, index) => ({
   id: s.id,
   name: s.name,
+  index,
   kmFromStart: s.km,
   x: s.x,
   y: s.y,
@@ -31,13 +34,13 @@ export const stationService = {
     if (!from || !to) return null;
     
     const distance = Math.abs(to.kmFromStart - from.kmFromStart);
-    // Real-world pricing: 12.000 (standard) + distance-based increments
-    const basePrice = 12000;
-    const price = distance === 0 ? 0 : basePrice + Math.round(distance * 1500);
+    // Official Fare Lookup from Matrix
+    const priceK = FARE_MATRIX[from.index][to.index];
+    const price = priceK * 1000;
     
     return {
-      distance: Number(distance.toFixed(1)),
-      price: Math.max(12000, price),
+      distance: Number(distance.toFixed(3)),
+      price: price,
       estimatedMinutes: Math.ceil(distance * 2 + 3) // ~2min per km + 3min overhead
     };
   }
