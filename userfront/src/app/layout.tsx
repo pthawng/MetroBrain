@@ -9,6 +9,7 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Footer } from "@/components/layout/Footer";
+import { UserNav } from "@/features/auth/components/UserNav";
 
 export const metadata: Metadata = {
   title: "MetroHCM | Hành Trình Xanh - Tốc Độ Tương Lai",
@@ -60,17 +61,9 @@ export default function RootLayout({
                   <a href="/news" className="hover:text-primary transition-all hover:tracking-[0.3em]">Tin tức</a>
                 </nav>
 
-                {/* Primary Action */}
+                {/* Primary Action (Auth State) */}
                 <div className="flex items-center">
-                  <button className="group relative px-8 py-2.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all shadow-[0_0_20px_rgba(0,122,255,0.1)]">
-                     <div className="relative z-10 flex items-center gap-2">
-                        <span>Đăng nhập</span>
-                        <div className="flex gap-0.5">
-                           <div className="w-0.5 h-0.5 rounded-full bg-current opacity-40" />
-                           <div className="w-0.5 h-0.5 rounded-full bg-current opacity-40" />
-                        </div>
-                     </div>
-                  </button>
+                   <UserNav />
                 </div>
 
               </div>

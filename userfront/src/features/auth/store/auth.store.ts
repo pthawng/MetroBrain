@@ -41,6 +41,8 @@ export const useAuthStore = create<AuthState>()(
 
       setSession: ({ user, accessToken, refreshToken, expiresIn }) => {
         const expiresAt = Date.now() + expiresIn * 1000;
+        
+        // Update Store
         set({
           user,
           accessToken,
@@ -49,6 +51,9 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           isLoading: false,
         });
+
+        // Set Cookie for Middleware (Max-Age in seconds)
+        document.cookie = `metro_auth_token=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax`;
       },
 
       logout: () => {
@@ -60,6 +65,9 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isLoading: false,
         });
+
+        // Clear Cookie
+        document.cookie = "metro_auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       },
 
       setLoading: (isLoading: boolean) => set({ isLoading }),
