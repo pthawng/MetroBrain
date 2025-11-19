@@ -32,7 +32,7 @@ export const MapPreview: React.FC = () => {
     if (!isValid) return;
     setIsSubmitting(true);
     await new Promise(r => setTimeout(r, 1500));
-    router.push('/ticket/success');
+    router.push('/ticket/confirm');
   };
 
   const upTrackD = useMemo(() => {

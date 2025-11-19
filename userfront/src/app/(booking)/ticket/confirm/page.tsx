@@ -33,13 +33,15 @@ export default function ConfirmBookingPage() {
   };
 
   const paymentMethods = [
-    { id: 'momo', name: 'Ví MoMo', icon: Wallet, color: '#A50064' },
-    { id: 'vnpay', name: 'VNPay', icon: CreditCard, color: '#005BA1' },
-    { id: 'zalopay', name: 'ZaloPay', icon: Wallet, color: '#0085FF' }
+    { id: 'momo', name: 'Ví MoMo', icon: Wallet, color: 'bg-white/5' },
+    { id: 'vnpay', name: 'VNPay', icon: CreditCard, color: 'bg-white/5' },
+    { id: 'wallet', name: 'Metro Wallet (Recommended)', icon: ShieldCheck, color: 'bg-primary/20' }
   ];
 
   return (
-    <div className="min-h-screen bg-background text-white">
+    <div className="min-h-screen bg-[#04060B] text-white">
+      {/* Background Radiance Muted */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[160px] -z-0 pointer-events-none" />
       <Container className="py-12 max-w-4xl">
         
         {/* Header */}
@@ -111,25 +113,24 @@ export default function ConfirmBookingPage() {
                     key={method.id}
                     onClick={() => setPaymentMethod(method.id)}
                     className={cn(
-                      "flex items-center justify-between p-4 rounded-2xl border-2 transition-all",
+                      "flex items-center justify-between p-5 rounded-2xl border-2 transition-all group",
                       paymentMethod === method.id 
-                        ? "border-primary bg-primary/10" 
-                        : "border-white/5 bg-white/5 hover:bg-white/10"
+                        ? "border-primary bg-primary/5 shadow-[0_0_30px_rgba(0,122,255,0.1)]" 
+                        : "border-white/5 bg-white/5 hover:border-white/10"
                     )}
                   >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: method.color }}
-                      >
-                        <method.icon className="w-6 h-6 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-all", method.color, paymentMethod === method.id ? "text-primary" : "text-slate-500")}>
+                        <method.icon className="w-6 h-6" />
                       </div>
-                      <span className="font-bold">{method.name}</span>
+                      <span className={cn("font-black uppercase text-[10px] tracking-widest", paymentMethod === method.id ? "text-white" : "text-slate-500 group-hover:text-slate-300")}>
+                         {method.name}
+                      </span>
                     </div>
                     {paymentMethod === method.id && (
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      </div>
+                       <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                       </div>
                     )}
                   </button>
                 ))}
@@ -156,17 +157,18 @@ export default function ConfirmBookingPage() {
                 onClick={handlePayment}
                 disabled={!paymentMethod || isProcessing}
                 className={cn(
-                  "w-full py-5 rounded-2xl font-black font-outfit text-white uppercase tracking-[0.2em] transition-all relative overflow-hidden",
-                  "bg-metro-gradient shadow-2xl shadow-primary/30 active:scale-[0.98]",
-                  (!paymentMethod || isProcessing) && "opacity-50 grayscale cursor-not-allowed"
+                  "w-full py-5 rounded-2xl font-black font-outfit uppercase tracking-[0.3em] text-xs transition-all relative overflow-hidden",
+                  paymentMethod && !isProcessing
+                    ? "bg-white text-black shadow-2xl hover:bg-slate-100 active:scale-[0.98]"
+                    : "bg-white/5 text-slate-800 cursor-not-allowed"
                 )}
               >
                 {isProcessing ? (
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                 ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    Thanh toán ngay
-                    <ArrowRight className="w-5 h-5" />
+                  <span className="flex items-center justify-center gap-3">
+                    Authorize Payment_
+                    <ArrowRight className="w-4 h-4" />
                   </span>
                 )}
               </button>
