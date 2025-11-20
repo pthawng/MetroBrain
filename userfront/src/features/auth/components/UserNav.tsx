@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAuthStore } from '@/features/auth/store/auth.store';
-import { LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, User, Settings, ChevronDown, Ticket as TicketIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -15,10 +15,6 @@ export const UserNav = () => {
       <Link href="/login" className="group relative px-8 py-2.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all shadow-[0_0_20px_rgba(0,122,255,0.1)]">
         <div className="relative z-10 flex items-center gap-2">
           <span>Đăng nhập</span>
-          <div className="flex gap-0.5">
-            <div className="w-0.5 h-0.5 rounded-full bg-current opacity-40" />
-            <div className="w-0.5 h-0.5 rounded-full bg-current opacity-40" />
-          </div>
         </div>
       </Link>
     );
@@ -59,13 +55,27 @@ export const UserNav = () => {
                 <p className="text-xs font-medium text-white truncate">{user.email}</p>
               </div>
 
-              <div className="p-2">
-                <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-                  <User size={16} />
+              <div className="p-2 space-y-1">
+                <Link 
+                  href="/tickets" 
+                  onClick={() => setIsOpen(false)}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group"
+                >
+                  <TicketIcon size={16} className="group-hover:text-primary transition-colors" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Vé của tôi</span>
+                </Link>
+                
+                <Link 
+                  href="/profile" 
+                  onClick={() => setIsOpen(false)}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group"
+                >
+                  <User size={16} className="group-hover:text-primary transition-colors" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Hồ sơ cá nhân</span>
-                </button>
-                <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-                  <Settings size={16} />
+                </Link>
+                
+                <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                  <Settings size={16} className="group-hover:text-primary transition-colors" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Cài đặt hệ thống</span>
                 </button>
               </div>

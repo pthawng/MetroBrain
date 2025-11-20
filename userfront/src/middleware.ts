@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // 1. Define Protected Routes
-const protectedRoutes = ['/booking', '/ticket'];
+const protectedRoutes = ['/booking'/*, '/ticket', '/tickets', '/profile'*/];
 
 // 2. Define Public (Auth) Routes
 const authRoutes = ['/login', '/register'];
