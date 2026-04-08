@@ -21,12 +21,14 @@ export const TrainPayloadSchema = z.object({
   speed: z.number().nonnegative(),
   heading: z.number(),
   timestamp: z.number(), // backend server time in ms
+  delaySeconds: z.number().nonnegative().optional(),
+  direction: z.string().optional(),
 });
 
 export type TrainPayload = z.infer<typeof TrainPayloadSchema>;
 export type TrainStatus = z.infer<typeof TrainStatusSchema>;
 
 // Internal Train model for the normalized store
-export interface Train extends TrainPayload {
+export interface TrainEntity extends TrainPayload {
   lastUpdatedClient: number; // For keeping track of stale data locally
 }

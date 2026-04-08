@@ -1,0 +1,99 @@
+.btn-root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: var(--transition-fast);
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  gap: 8px;
+  font-family: inherit;
+  outline: none;
+}
+
+.btn-root:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Variants */
+.btn-variant-primary {
+  background: hsl(var(--color-accent));
+  color: #fff;
+}
+.btn-variant-primary:hover:not(:disabled) {
+  background: hsla(var(--color-accent) / 0.8);
+}
+
+.btn-variant-secondary {
+  background: hsla(var(--color-text-primary) / 0.05);
+  color: hsl(var(--color-text-primary));
+  border-color: hsla(var(--color-text-primary) / 0.1);
+}
+.btn-variant-secondary:hover:not(:disabled) {
+  background: hsla(var(--color-text-primary) / 0.1);
+}
+
+.btn-variant-danger {
+  background: hsla(var(--color-status-error) / 0.1);
+  color: hsl(var(--color-status-error));
+  border-color: hsla(var(--color-status-error) / 0.2);
+}
+.btn-variant-danger:hover:not(:disabled) {
+  background: hsla(var(--color-status-error) / 0.2);
+}
+
+.btn-variant-ghost {
+  background: transparent;
+  color: hsl(var(--color-text-secondary));
+}
+.btn-variant-ghost:hover:not(:disabled) {
+  color: hsl(var(--color-text-primary));
+  background: hsla(var(--color-text-primary) / 0.05);
+}
+
+.btn-variant-control {
+  background: hsla(var(--color-bg-elevated) / 0.8);
+  color: hsl(var(--color-accent));
+  border-color: hsla(var(--color-accent) / 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.btn-variant-control:hover:not(:disabled) {
+  border-color: hsl(var(--color-accent));
+  transform: translateY(-1px);
+}
+
+/* Sizes */
+.btn-size-sm {
+  padding: 4px 12px;
+  font-size: var(--font-size-xs);
+}
+
+.btn-size-md {
+  padding: 8px 16px;
+  font-size: var(--font-size-sm);
+}
+
+.btn-size-lg {
+  padding: 12px 24px;
+  font-size: var(--font-size-base);
+}
+
+.btn-loading {
+  position: relative;
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid hsla(var(--color-text-primary) / 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

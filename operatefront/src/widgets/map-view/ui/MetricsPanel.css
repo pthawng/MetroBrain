@@ -1,0 +1,85 @@
+.metrics-panel {
+  position: absolute;
+  top: 68px;
+  left: 20px;
+  width: 240px;
+  z-index: 1000;
+}
+
+.metrics-section {
+  margin-bottom: 16px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-item .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: hsl(var(--color-text-dim));
+  margin-bottom: 2px;
+}
+
+.metric-item .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: hsl(var(--color-text-primary));
+}
+
+.metrics-divider {
+  height: 1px;
+  background: hsla(var(--color-text-primary) / 0.05);
+  margin: 16px -16px;
+}
+
+.control-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: hsl(var(--color-text-secondary));
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+.filter-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-btn {
+  background: hsla(var(--color-text-primary) / 0.03);
+  border: 1px solid hsla(var(--color-text-primary) / 0.05);
+  color: hsl(var(--color-text-secondary));
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-weight: 500;
+}
+
+.filter-btn:hover {
+  background: hsla(var(--color-text-primary) / 0.08);
+}
+
+.filter-btn.active {
+  background: hsla(var(--color-accent) / 0.1);
+  border-color: hsla(var(--color-accent) / 0.5);
+  color: hsl(var(--color-accent));
+}
+
+.filter-btn.btn-warning.active {
+  background: hsla(var(--color-status-warning) / 0.1);
+  border-color: hsla(var(--color-status-warning) / 0.5);
+  color: hsl(var(--color-status-warning));
+}

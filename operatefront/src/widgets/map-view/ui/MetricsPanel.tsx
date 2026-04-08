@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { metrics } from '../../../shared/lib/metrics';
+import { useTrainStore } from '../../../entities/train/store/trainStore';
+import { useFilterStore } from '../../../features/alert-system/store/filterStore';
+import { Panel } from '../../../shared/ui/Panel/Panel';
+import './MetricsPanel.css';
 
-export const MetricsPanel = () => {
+export const MetricsPanel: React.FC = () => {
   const [currentMetrics, setCurrentMetrics] = useState(metrics.getMetrics());
+  const trainsMap = useTrainStore(state => state.trains);
+  const trains = useMemo(() => Object.values(trainsMap), [trainsMap]);
+  const { statusFilter, setStatusFilter } = useFilterStore();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -11,28 +18,42 @@ export const MetricsPanel = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const delayedCount = trains.filter(t => t.status === 'delayed').length;
+
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: 20,
-      left: 20,
-      background: 'rgba(0,0,0,0.7)',
-      backdropFilter: 'blur(10px)',
-      padding: '16px',
-      borderRadius: '8px',
-      color: '#fff',
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      zIndex: 1000,
-      border: '1px solid rgba(255,255,255,0.1)'
-    }}>
-      <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#ffcc00' }}>System Metrics</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
-        <span>FPS:</span> <strong>{currentMetrics.fps}</strong>
-        <span>Dropped:</span> <strong>{currentMetrics.droppedFrames}</strong>
-        <span>Latency:</span> <strong>{currentMetrics.updateLatency.toFixed(1)}ms</strong>
-        <span>Invalid:</span> <strong style={{ color: currentMetrics.invalidPayloads > 0 ? '#ff4444' : 'inherit'}}>{currentMetrics.invalidPayloads}</strong>
+    <Panel title="System Operations" className="metrics-panel">
+      <div className="metrics-section">
+        <div className="metrics-grid">
+          <div className="metric-item">
+            <span className="label">FPS</span>
+            <span className="value">{currentMetrics.fps}</span>
+          </div>
+          <div className="metric-item">
+            <span className="label">Latency</span>
+            <span className="value">{currentMetrics.updateLatency.toFixed(1)}ms</span>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div className="metrics-divider" />
+
+      <div className="control-section">
+        <h4 className="control-title">Quick Filters</h4>
+        <div className="filter-buttons">
+          <button 
+            className={`filter-btn ${statusFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('all')}
+          >
+            All Units ({trains.length})
+          </button>
+          <button 
+            className={`filter-btn btn-warning ${statusFilter === 'delayed' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('delayed')}
+          >
+            Delayed ({delayedCount})
+          </button>
+        </div>
+      </div>
+    </Panel>
   );
 };
