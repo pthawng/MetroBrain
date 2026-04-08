@@ -2,75 +2,133 @@ import { metrics } from '../../../shared/lib/metrics';
 import { type TrainPayload } from '../../../entities/train/model/schema';
 import { useTrainStore } from '../../../entities/train/store/trainStore';
 import { updateInterpolationTarget } from '../model/interpolationEngine';
+import { useAlertStore } from '../../alert-system/store/alertStore';
+import { z } from 'zod';
 
 // Buffer variables
 let incomingBuffer: Record<string, TrainPayload> = {};
 let lastStoreSync = performance.now();
-const STORE_SYNC_INTERVAL_MS = 1000; // 1Hz canonical update
+const STORE_SYNC_INTERVAL_MS = 1000;
 
-import { z } from 'zod';
+// Anti-fatigue / Cooldown logic
+const cooldowns: Record<string, number> = {};
+const MIN_ALERT_INTERVAL = 5000; // 5s
 
 const RawSocketTrainSchema = z.object({
   tripId: z.string(),
   lineId: z.string(),
   status: z.enum(['MOVING', 'STOPPED', 'OFFLINE']),
   position: z.object({ lat: z.number(), lng: z.number() }).nullable(),
+  delaySeconds: z.number().optional(),
+  direction: z.string().optional(),
 });
 
+const TelemetryBundleSchema = z.object({
+  v: z.number(),
+  ts: z.number(), // Server timestamp
+  trains: z.array(RawSocketTrainSchema)
+});
+
+const SnapshotSchema = z.object({
+  v: z.number(),
+  ts: z.number(),
+  state: z.array(RawSocketTrainSchema)
+});
+
+let currentVersion = 0;
+
+export function processSnapshot(raw: unknown) {
+  const result = SnapshotSchema.safeParse(raw);
+  if (!result.success) return;
+  
+  currentVersion = result.data.v;
+  // Clear buffer and apply full state
+  incomingBuffer = {};
+  processRawList(result.data.state, Date.now() - result.data.ts);
+}
+
 export function processSocketPayload(rawPayload: unknown) {
-  // 1. Validate real backend schema
-  const schema = z.array(RawSocketTrainSchema).or(RawSocketTrainSchema);
-  const result = schema.safeParse(rawPayload);
+  const result = TelemetryBundleSchema.safeParse(rawPayload);
   
   if (!result.success) {
     metrics.recordInvalidPayload();
-    console.warn('Invalid socket payload:', (result as any).error?.issues || result.error);
     return;
   }
 
-  const rawPayloads = Array.isArray(result.data) ? result.data : [result.data];
+  const { v, ts, trains } = result.data;
 
-  // Map to internal domain model
-  const payloads: TrainPayload[] = rawPayloads
-    .filter(p => p.position !== null) // Drop items without physical location
+  // Elite Guard: Discard old packets
+  if (v < currentVersion) {
+    metrics.recordDroppedFrame();
+    return;
+  }
+  currentVersion = v;
+
+  const latency = Date.now() - ts;
+  processRawList(trains, latency);
+}
+
+function processRawList(rawList: any[], latency: number) {
+  const payloads: TrainPayload[] = rawList
+    .filter(p => p.position !== null)
     .map(p => ({
       version: 'v1',
       id: p.tripId,
       lineId: p.lineId,
-      status: p.status === 'MOVING' ? 'active' : p.status === 'STOPPED' ? 'stopped' : 'maintenance',
+      status: (p.delaySeconds || 0) > 60 ? 'delayed' : (p.status === 'MOVING' ? 'active' : p.status === 'STOPPED' ? 'stopped' : 'maintenance'),
       location: p.position!,
-      speed: 0, // Fallback, could be calculated in engine
-      heading: 0, // Fallback
-      timestamp: Date.now(), // Fallback since simulation doesn't emit precise timestamps yet
+      speed: 0,
+      heading: 0,
+      timestamp: performance.now(),
+      delaySeconds: p.delaySeconds,
+      direction: p.direction,
     }));
 
   for (const payload of payloads) {
-    // 2. Metrics (Latency Compensation)
-    // Server doesn't send time, we assume 0 latency for now, wait for backend upgrade
-    const latency = 0; 
-    
-    // 3. Update Buffer 
-    const existing = incomingBuffer[payload.id];
-    if (existing && existing.timestamp > payload.timestamp) {
-      metrics.recordDroppedFrame();
-      continue;
-    }
-    
+    detectStateChanges(payload);
     incomingBuffer[payload.id] = payload;
-
-    // 4. Update Interpolation
     updateInterpolationTarget(payload, latency);
   }
 }
 
-// Fixed tick to flush to Canonical Store (throttled)
+function detectStateChanges(newPayload: TrainPayload) {
+  const previous = useTrainStore.getState().trains[newPayload.id];
+  if (!previous) return;
+
+  const now = Date.now();
+  const lastAlert = cooldowns[newPayload.id] || 0;
+  
+  if (now - lastAlert < MIN_ALERT_INTERVAL) return;
+
+  // 1. Critical Delay Detection
+  if (newPayload.status === 'delayed' && previous.status !== 'delayed') {
+    useAlertStore.getState().addAlert({
+      trainId: newPayload.id,
+      type: 'DELAY_START',
+      message: `Train ${newPayload.id.substring(0,6)} is now DELAYED (+${newPayload.delaySeconds}s)`,
+      severity: (newPayload.delaySeconds || 0) > 120 ? 'critical' : 'warning',
+    });
+    cooldowns[newPayload.id] = now;
+  }
+
+  // 2. Status Change Detection (Stopped in tunnel etc)
+  if (newPayload.status === 'stopped' && previous.status === 'active') {
+    useAlertStore.getState().addAlert({
+      trainId: newPayload.id,
+      type: 'UNEXPECTED_STOP',
+      message: `Train ${newPayload.id.substring(0,6)} has STOPPED unexpectedly`,
+      severity: 'warning',
+    });
+    cooldowns[newPayload.id] = now;
+  }
+}
+
 export function startBufferFlushLoop() {
   const tick = () => {
     let now = performance.now();
     if (now - lastStoreSync >= STORE_SYNC_INTERVAL_MS) {
       const trainsToUpdate = Object.keys(incomingBuffer);
       if (trainsToUpdate.length > 0) {
-        // Transform Payload -> Store Entity
         const clientTimestamp = Date.now();
         const storeUpdates = Object.fromEntries(
           Object.values(incomingBuffer).map((t) => [
@@ -78,17 +136,12 @@ export function startBufferFlushLoop() {
             { ...t, lastUpdatedClient: clientTimestamp }
           ])
         );
-        
-        // Batch flush
         useTrainStore.getState().batchUpdate(storeUpdates);
-        
-        // Clear buffer
         incomingBuffer = {};
       }
       lastStoreSync = now;
     }
     requestAnimationFrame(tick);
   };
-  
   requestAnimationFrame(tick);
 }

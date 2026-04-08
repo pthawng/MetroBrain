@@ -14,7 +14,7 @@ import { StateService } from '../services/state.service';
 @WebSocketGateway({
   namespace: '/simulation',
   cors: {
-    origin: '*', // Customize this for production
+    origin: '*', 
   },
 })
 export class SimulationGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -22,14 +22,19 @@ export class SimulationGateway implements OnGatewayConnection, OnGatewayDisconne
   server: Server;
 
   private readonly logger = new Logger(SimulationGateway.name);
+  private versionId = 1; // Monotonic Version ID
 
   constructor(private readonly stateService: StateService) {}
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
     
-    // Immediately send current state to newly connected client
-    client.emit('train_positions', this.stateService.getAllPositions());
+    // Elite Standard: Send versioned snapshot on connect
+    client.emit('snapshot', {
+      v: this.versionId,
+      ts: Date.now(),
+      state: this.stateService.getAllPositions()
+    });
   }
 
   handleDisconnect(client: Socket) {
@@ -41,9 +46,13 @@ export class SimulationGateway implements OnGatewayConnection, OnGatewayDisconne
     client.join(lineId);
     this.logger.log(`Client ${client.id} joined line: ${lineId}`);
     
-    // Send current positions for this line immediately
+    // Versioned line snapshot
     const linePositions = this.stateService.getPositionsByLine(lineId);
-    client.emit('train_positions_line', linePositions);
+    client.emit('snapshot_line', {
+      v: this.versionId,
+      lineId,
+      state: linePositions
+    });
   }
 
   @SubscribeMessage('leaveLine')
@@ -55,24 +64,16 @@ export class SimulationGateway implements OnGatewayConnection, OnGatewayDisconne
   // Called periodically by SimulationService
   broadcastPositions() {
     const allPositions = this.stateService.getAllPositions();
-    
-    // Broadcast to all clients in the default namespace room
-    this.server.emit('train_positions', allPositions);
+    this.versionId++; // Increment version on every state change
 
-    // Optional: Broadcast delta or specific line data to rooms here
-    // Example: group positions by lineId and send to respective rooms
-    /*
-    const positionsByLine = new Map<string, any[]>();
-    allPositions.forEach(pos => {
-      if (!positionsByLine.has(pos.lineId)) {
-        positionsByLine.set(pos.lineId, []);
-      }
-      positionsByLine.get(pos.lineId).push(pos);
-    });
+    // Elite Standard: The Telemetry Bundle
+    const bundle = {
+      v: this.versionId,
+      ts: Date.now(),
+      trains: allPositions
+    };
 
-    positionsByLine.forEach((positions, lineId) => {
-      this.server.to(lineId).emit('train_positions_line', positions);
-    });
-    */
+    // Broadcast bundle to all clients
+    this.server.emit('train_telemetry', bundle);
   }
 }

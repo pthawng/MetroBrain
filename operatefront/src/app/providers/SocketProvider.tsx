@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { processSocketPayload, startBufferFlushLoop } from '../../features/realtime-tracking/socket/buffer';
-import { metrics } from '../../shared/lib/metrics';
+import { processSocketPayload, processSnapshot, startBufferFlushLoop } from '../../features/realtime-tracking/socket/buffer';
 
 // Socket setup
-const SOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001';
+const rawUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001';
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
@@ -14,10 +13,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     startBufferFlushLoop();
 
     // 2. Connect to WebSocket
-    const socket: Socket = io(SOCKET_URL, {
+    // Split the base URL and the namespace correctly for Socket.io v4
+    const baseHost = rawUrl.replace(/\/simulation$/, '');
+    const socket: Socket = io(baseHost + '/simulation', {
       transports: ['websocket'],
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
+      autoConnect: true
     });
 
     socket.on('connect', () => {
@@ -30,8 +32,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn('❌ Disconnected from Command Center Socket');
     });
 
-    // 3. High-frequency Ingestion Stream
-    socket.on('train_positions', (payload) => {
+    // 3. High-frequency Ingestion Stream (Elite Standard)
+    socket.on('snapshot', (payload) => {
+      processSnapshot(payload);
+    });
+
+    socket.on('train_telemetry', (payload) => {
       processSocketPayload(payload);
     });
 
